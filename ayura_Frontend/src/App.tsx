@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 
 export default function App() {
-  const [results, setResults] = useState<ComparisonResult | null>(null);
+  const [results, setResults] = useState<ComparisonResult[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +30,7 @@ export default function App() {
     setResults(null); // Clear previous results to trigger animation
     try {
       const data = await analyzeMedicine(name);
-      if (data) {
+      if (data && data.length > 0) {
         setResults(data);
         // Scroll to results with a slightly longer delay for smooth transition
         setTimeout(() => {
@@ -69,7 +69,7 @@ export default function App() {
         mimeType: file.type
       });
       
-      if (data) {
+      if (data && data.length > 0) {
         setResults(data);
         setTimeout(() => {
           const element = document.getElementById('results-section');
