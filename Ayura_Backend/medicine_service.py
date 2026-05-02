@@ -156,13 +156,18 @@ def build_result(medicine_name: str, brand_price: float = 0) -> dict:
 
 
 def local_search(extracted_text: str) -> dict:
+    """Fallback — search only Jan Aushadhi DB to avoid false matches."""
     text_lower = extracted_text.lower()
     found = []
-    if not df_brand.empty:
-        for _, row in df_brand.iterrows():
-            name = str(row["Medicine Name"]).lower()
-            key = name.split()[0] if name else ""
-            if key and len(key) > 4 and key in text_lower and key not in found:
+
+    if not df_ja.empty:
+        for _, row in df_ja.iterrows():
+            generic = str(row["Generic Name"]).lower()
+            words = [w for w in generic.split() if len(w) > 4]
+            if not words:
+                continue
+            key = words[0]
+            if key in text_lower and key not in found:
                 found.append(key)
             if len(found) >= 8:
                 break
@@ -178,13 +183,23 @@ def local_search(extracted_text: str) -> dict:
 def find_generic_alternatives(extracted_text: str) -> dict:
     try:
         prompt = f"""
-        From this prescription text, identify all medicine names as a JSON list.
-        Return ONLY this JSON, no markdown:
-        {{"medicines": ["medicine1", "medicine2"]}}
+You are a medical prescription parser.
+Extract ONLY the medicine/drug names from this prescription text.
+Do NOT include:
+- Doctor names, patient names, hospital names
+- Words like "Daily", "Science", "Derma", "Order", "Service", "Name"
+- Dosage instructions, frequencies, directions
+- Diagnoses, test names, or medical procedures
 
-        Prescription text:
-        {extracted_text}
-        """
+Return ONLY medicine brand names or generic drug names as a JSON list.
+Examples of valid medicines: Tretiva, Moiz, Deriva CMS, Episoft, Azithromycin, Paracetamol
+
+Prescription text:
+{extracted_text}
+
+Return ONLY this JSON, no markdown, no explanation:
+{{"medicines": ["medicine1", "medicine2"]}}
+"""
 
         response = client.models.generate_content(
             model="gemini-1.5-flash",
@@ -206,6 +221,7 @@ def find_generic_alternatives(extracted_text: str) -> dict:
 
     except Exception:
         return local_search(extracted_text)
+
 
 def build_comparison(alt: dict) -> dict:
     brand_price = alt.get("brand_price_inr", 0)
