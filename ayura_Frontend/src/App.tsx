@@ -1,13 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -20,34 +10,32 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 
 export default function App() {
-  const [results, setResults] = useState<ComparisonResult[] | null>(null);
+  const [results, setResults] = useState<ComparisonResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const scrollToResults = () => {
+    setTimeout(() => {
+      const element = document.getElementById('results-section');
+      if (element) {
+        const offset = 80;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = element.getBoundingClientRect().top;
+        const offsetPosition = elementRect - bodyRect - offset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      }
+    }, 300);
+  };
 
   const handleSearch = async (name: string) => {
     setIsLoading(true);
     setError(null);
-    setResults(null); // Clear previous results to trigger animation
+    setResults(null);
     try {
       const data = await analyzeMedicine(name);
-      if (data && data.length > 0) {
+      if (data) {
         setResults(data);
-        // Scroll to results with a slightly longer delay for smooth transition
-        setTimeout(() => {
-          const element = document.getElementById('results-section');
-          if (element) {
-            const offset = 80;
-            const bodyRect = document.body.getBoundingClientRect().top;
-            const elementRect = element.getBoundingClientRect().top;
-            const elementPosition = elementRect - bodyRect;
-            const offsetPosition = elementPosition - offset;
-
-            window.scrollTo({
-              top: offsetPosition,
-              behavior: 'smooth'
-            });
-          }
-        }, 300);
+        scrollToResults();
       } else {
         setError("Could not find information for this medicine. Please try another name or upload a clear prescription image.");
       }
@@ -68,24 +56,9 @@ export default function App() {
         data: base64.split(',')[1],
         mimeType: file.type
       });
-      
-      if (data && data.length > 0) {
+      if (data) {
         setResults(data);
-        setTimeout(() => {
-          const element = document.getElementById('results-section');
-          if (element) {
-            const offset = 80;
-            const bodyRect = document.body.getBoundingClientRect().top;
-            const elementRect = element.getBoundingClientRect().top;
-            const elementPosition = elementRect - bodyRect;
-            const offsetPosition = elementPosition - offset;
-
-            window.scrollTo({
-              top: offsetPosition,
-              behavior: 'smooth'
-            });
-          }
-        }, 300);
+        scrollToResults();
       } else {
         setError("AI could not read the prescription clearly. Please upload a high-resolution photo.");
       }
@@ -108,10 +81,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-ayura-bg font-sans selection:bg-ayura-primary/20 selection:text-ayura-text">
       <Navbar />
-      
+
       <AnimatePresence>
         {isLoading && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -127,15 +100,15 @@ export default function App() {
       </AnimatePresence>
 
       <main>
-        <Hero 
-          onSearch={handleSearch} 
-          onUpload={handleUpload} 
-          isLoading={isLoading} 
+        <Hero
+          onSearch={handleSearch}
+          onUpload={handleUpload}
+          isLoading={isLoading}
         />
 
         <AnimatePresence>
           {error && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -170,4 +143,3 @@ export default function App() {
     </div>
   );
 }
-
