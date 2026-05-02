@@ -1,6 +1,13 @@
 {
-  "name": "GenerX",
-  "description": "AI-powered platform to find affordable generic medicine alternatives in India.",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "name": "AYURA AI",
+  "description": "Find cheaper generic alternatives for your medicines by searching or uploading your prescription.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "AI-powered prescription analysis",
+    "Cheaper generic medicine matching",
+    "Cost comparison tool",
+    "User reviews & community ratings"
+  ]
 }
