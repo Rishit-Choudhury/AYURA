@@ -1,6 +1,6 @@
-# GenerX 💊
+# AYURA 💊
 
-GenerX is an AI-powered web platform designed to help users discover affordable generic alternatives to branded medicines.
+AYURA is an AI-powered web platform designed to help users discover affordable generic alternatives to branded medicines.
 
 Users can:
 
@@ -15,7 +15,7 @@ The system identifies the medicine, matches its composition using a medicine dat
 
 Many patients purchase expensive branded medicines without knowing that cheaper generic alternatives with the same composition are available.
 
-GenerX helps users make informed healthcare decisions by finding affordable alternatives quickly and easily.
+AYURA helps users make informed healthcare decisions by finding affordable alternatives quickly and easily.
 
 ---
 
@@ -77,26 +77,9 @@ This dataset is used to find equivalent generic medicines and compare pricing.
 
 ---
 
-## Project Structure ------------------TO BE CHANGED!
+### Clone Repository
 
-src/
-├── components/
-├── sections/
-├── hooks/
-├── utils/
-
-backend/
-├── main.py
-├── dataset/
-│ └── medicines.csv
-
----
-
-## Installation
-
-### Clone Repository ------------------TO BE CHANGED!
-
-git clone <your-repository-url>
+git clone https://github.com/Rishit-Choudhury/AYURA
 
 ---
 
