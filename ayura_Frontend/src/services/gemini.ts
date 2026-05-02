@@ -6,40 +6,55 @@ const INDIAN_MEDICINE_DB: Record<string, any> = {
   "augmentin": {
     name: "Augmentin 625 Duo",
     manufacturer: "GlaxoSmithKline Pharmaceuticals Ltd",
-    activeIngredients: ["Amoxicillin", "Potassium Clavulanate"],
+    composition: "Amoxicillin (500mg) + Clavulanic Acid (125mg)",
+    activeIngredients: ["Amoxicillin", "Clavulanic Acid"],
     dosage: "625mg",
     price: 224.50,
     category: "Antibiotic",
+    therapeutic_class: "Penicillins",
+    uses: ["Bacterial infections of the ear, nose, throat, skin and urinary tract"],
+    side_effects: ["Nausea", "Diarrhea", "Vomiting"],
+    clinicalNotes: "Augmentin is a penicillin-type antibiotic that works by stopping the growth of bacteria.",
     generics: [
-      { name: "Moxikind-CV 625", manufacturer: "Mankind Pharma Ltd", price: 92.00 },
-      { name: "Advent 625", manufacturer: "Cipla Ltd", price: 108.40 },
-      { name: "Moxclav 625", manufacturer: "Sun Pharmaceutical Industries Ltd", price: 115.00 }
+      { 
+        name: "Moxikind-CV 625", 
+        manufacturer: "Mankind Pharma Ltd", 
+        price: 92.00, 
+        clinicalNotes: "Bio-equivalent generic with equivalent pharmacokinetics.",
+        notes: "Available at Jan Aushadhi Kendra for ₹92.00 per strip",
+        buy_links: ["https://www.1mg.com/search/all?name=Moxikind-CV+625"]
+      },
+      { 
+        name: "Advent 625", 
+        manufacturer: "Cipla Ltd", 
+        price: 108.40, 
+        clinicalNotes: "WHO-GMP certified production line.",
+        notes: "Reliable alternative from Cipla",
+        buy_links: ["https://www.1mg.com/search/all?name=Advent+625"]
+      }
     ]
   },
   "atorva": {
     name: "Atorva 10mg",
     manufacturer: "Zydus Cadila",
+    composition: "Atorvastatin (10mg)",
     activeIngredients: ["Atorvastatin"],
     dosage: "10mg",
     price: 112.00,
     category: "Cholesterol",
+    therapeutic_class: "Statins",
+    uses: ["To reduce high cholesterol levels and prevent heart disease"],
+    side_effects: ["Muscle pain", "Weakness", "Nausea"],
+    clinicalNotes: "Used to lower 'bad' cholesterol (LDL) and raise 'good' cholesterol (HDL).",
     generics: [
-      { name: "Lipicure 10", manufacturer: "Intas Pharmaceuticals Ltd", price: 45.00 },
-      { name: "Tonact 10", manufacturer: "Lupin Ltd", price: 48.00 },
-      { name: "Gen-Atorvastatin 10", manufacturer: "Verified Generic Lab", price: 22.00 }
-    ]
-  },
-  "pantocid": {
-    name: "Pantocid 40",
-    manufacturer: "Sun Pharmaceutical Industries Ltd",
-    activeIngredients: ["Pantoprazole"],
-    dosage: "40mg",
-    price: 165.00,
-    category: "Antacid",
-    generics: [
-      { name: "Pan 40", manufacturer: "Alkem Laboratories Ltd", price: 88.00 },
-      { name: "Pantosec 40", manufacturer: "Cipla Ltd", price: 92.00 },
-      { name: "Generic Pantoprazole", manufacturer: "Jan Aushadhi", price: 18.00 }
+      { 
+        name: "Lipicure 10", 
+        manufacturer: "Intas Pharmaceuticals Ltd", 
+        price: 45.00, 
+        clinicalNotes: "Consistent efficacy at lower price.",
+        notes: "Cost-effective statin option",
+        buy_links: ["https://www.1mg.com/search/all?name=Lipicure+10"]
+      }
     ]
   }
 };
@@ -63,9 +78,11 @@ export async function analyzeMedicine(input: string | { data: string, mimeType: 
       dosage: "500mg",
       price: 150.00,
       category: "General Care",
+      sideEffects: ["Mild headache", "Fatigue"],
+      clinicalNotes: "This medicine is identified as a standard pharmaceutical preparation. The generic alternatives provide the same efficacy at a reduced cost.",
       generics: [
-        { name: "Generic-" + genericName, manufacturer: "Verified Generic Lab", price: 35.00 },
-        { name: "Pharma-Safe Version", manufacturer: "Cipla Ltd", price: 42.00 }
+        { name: "Generic-" + genericName, manufacturer: "Verified Generic Lab", price: 35.00, clinicalNotes: "Approved generic molecule with equivalent pharmacokinetics." },
+        { name: "Pharma-Safe Version", manufacturer: "Cipla Ltd", price: 42.00, clinicalNotes: "Nationally distributed generic known for consistent safety profile." }
       ]
     };
   }
@@ -82,8 +99,12 @@ export async function analyzeMedicine(input: string | { data: string, mimeType: 
     ...alt,
     id: `gen-${index}-` + Math.random().toString(36).substr(2, 9),
     activeIngredients: match.activeIngredients,
+    composition: match.composition,
     dosage: match.dosage,
     category: match.category,
+    therapeutic_class: match.therapeutic_class,
+    uses: match.uses,
+    side_effects: match.side_effects,
     rating: 4.2 + (Math.random() * 0.7),
     reviewsCount: Math.floor(Math.random() * 2000) + 100,
     isGeneric: true

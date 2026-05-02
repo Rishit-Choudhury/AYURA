@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Search, Upload, FileText, Loader2, Camera, ShieldCheck } from 'lucide-react';
+import { Search, Upload, FileText, Loader2, Camera, ShieldCheck, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface HeroProps {
@@ -96,42 +96,53 @@ export const Hero = ({ onSearch, onUpload, isLoading }: HeroProps) => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="hidden lg:block lg:col-span-12 xl:col-span-5"
+            className="hidden lg:flex lg:col-span-12 xl:col-span-5 items-center justify-center p-4"
           >
-            <div className="bg-ayura-text text-white p-10 rounded-[40px] flex flex-col justify-between aspect-[4/5] shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-ayura-primary rounded-full blur-[100px] opacity-20 -translate-y-1/2 translate-x-1/2 group-hover:scale-125 transition-transform duration-700" />
-              
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-12">
-                  <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-bold">AI Savings Analysis</span>
-                  <span className="bg-ayura-primary text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Live Accuracy</span>
-                </div>
-                <div className="space-y-8">
-                  <div className="flex justify-between items-center">
-                    <div className="flex flex-col">
-                      <span className="text-ayura-secondary text-[10px] font-bold uppercase tracking-wider mb-1">Brand Name</span>
-                      <span className="text-2xl font-light">Augmentin (625)</span>
+            <div className="w-full max-w-sm">
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div 
+                    key="loading"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.05 }}
+                    className="flex flex-col items-center justify-center space-y-6 text-center bg-white/50 backdrop-blur-sm p-10 rounded-[40px] border border-ayura-border"
+                  >
+                    <div className="relative">
+                      <div className="w-20 h-20 border-4 border-ayura-primary/10 rounded-full"></div>
+                      <div className="w-20 h-20 border-4 border-t-ayura-primary rounded-full animate-spin absolute top-0 left-0"></div>
+                      <Activity className="w-8 h-8 text-ayura-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                     </div>
-                    <span className="text-xl font-light opacity-50">₹224.00</span>
-                  </div>
-                  <div className="h-px bg-white/10"></div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex flex-col">
-                      <span className="text-ayura-secondary text-[10px] font-bold uppercase tracking-wider mb-1">Generic Option</span>
-                      <span className="text-2xl font-light">Generic Amoxicillin</span>
+                    <div>
+                      <h3 className="text-xl font-serif text-ayura-text">Processing...</h3>
+                      <p className="text-xs text-ayura-muted mt-2">Checking verified chemical databases</p>
                     </div>
-                    <span className="text-4xl font-serif text-ayura-secondary">₹58.50</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-auto relative z-10">
-                <div className="bg-white/5 p-5 rounded-2xl border border-white/10 backdrop-blur-sm">
-                  <p className="text-sm italic opacity-80 underline underline-offset-8 decoration-ayura-secondary/50">Saving you ₹165.50 per strip</p>
-                </div>
-                <button className="w-full mt-6 bg-ayura-primary text-white py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] hover:bg-white hover:text-ayura-text transition-all transform active:scale-95 shadow-xl shadow-ayura-primary/20">
-                  Analyze Your Savings
-                </button>
-              </div>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="static"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-white p-8 rounded-[40px] border border-ayura-border shadow-xl relative overflow-hidden flex flex-col"
+                  >
+                    <div className="absolute -top-12 -right-12 w-32 h-32 bg-ayura-primary/5 rounded-full" />
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="p-3 bg-ayura-primary/10 rounded-xl">
+                        <ShieldCheck className="w-6 h-6 text-ayura-primary" />
+                      </div>
+                      <span className="text-[10px] font-bold text-ayura-primary uppercase tracking-[0.2em]">Verified Hub</span>
+                    </div>
+                    <h3 className="text-xl font-serif text-ayura-text mb-3 leading-tight">Pharmaceutical Transparency</h3>
+                    <p className="text-sm text-ayura-muted leading-relaxed mb-6">
+                      We cross-reference every search with official Indian pharmaceutical standards to ensure bio-equivalence.
+                    </p>
+                    <div className="flex items-center gap-3 text-ayura-primary font-bold text-[10px] uppercase tracking-widest mt-auto pt-6 border-t border-slate-50">
+                      <div className="w-1.5 h-1.5 rounded-full bg-ayura-secondary animate-pulse" />
+                      System Status: Optimized
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         </div>

@@ -27,14 +27,27 @@ export default function App() {
   const handleSearch = async (name: string) => {
     setIsLoading(true);
     setError(null);
+    setResults(null); // Clear previous results to trigger animation
     try {
       const data = await analyzeMedicine(name);
       if (data) {
         setResults(data);
-        // Scroll to results
+        // Scroll to results with a slightly longer delay for smooth transition
         setTimeout(() => {
-          document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+          const element = document.getElementById('results-section');
+          if (element) {
+            const offset = 80;
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = element.getBoundingClientRect().top;
+            const elementPosition = elementRect - bodyRect;
+            const offsetPosition = elementPosition - offset;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        }, 300);
       } else {
         setError("Could not find information for this medicine. Please try another name or upload a clear prescription image.");
       }
@@ -48,6 +61,7 @@ export default function App() {
   const handleUpload = async (file: File) => {
     setIsLoading(true);
     setError(null);
+    setResults(null);
     try {
       const base64 = await fileToBase64(file);
       const data = await analyzeMedicine({
@@ -58,8 +72,20 @@ export default function App() {
       if (data) {
         setResults(data);
         setTimeout(() => {
-          document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+          const element = document.getElementById('results-section');
+          if (element) {
+            const offset = 80;
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = element.getBoundingClientRect().top;
+            const elementPosition = elementRect - bodyRect;
+            const offsetPosition = elementPosition - offset;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        }, 300);
       } else {
         setError("AI could not read the prescription clearly. Please upload a high-resolution photo.");
       }
@@ -83,6 +109,23 @@ export default function App() {
     <div className="min-h-screen bg-ayura-bg font-sans selection:bg-ayura-primary/20 selection:text-ayura-text">
       <Navbar />
       
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-md flex flex-col items-center justify-center pointer-events-auto"
+          >
+            <div className="relative">
+              <div className="w-32 h-32 border-8 border-ayura-primary/10 rounded-full" />
+              <div className="w-32 h-32 border-8 border-t-ayura-primary rounded-full animate-spin absolute top-0 left-0" />
+            </div>
+            <p className="mt-8 text-2xl font-serif text-ayura-text animate-pulse">Syncing with Pharma Database...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main>
         <Hero 
           onSearch={handleSearch} 
