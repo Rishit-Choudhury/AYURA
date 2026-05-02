@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from ocr_service import extract_text_from_image
-from medicine_service import find_generic_alternatives
+from medicine_service import find_generic_alternatives, build_comparison
 
 app = FastAPI()
 
@@ -20,8 +20,18 @@ def health_check():
 async def upload_prescription(file: UploadFile = File(...)):
     image_bytes = await file.read()
     extracted_text = extract_text_from_image(image_bytes)
-    alternatives = find_generic_alternatives(extracted_text)
+    result = find_generic_alternatives(extracted_text)
+
+    # Build comparison for each medicine found
+    comparisons = []
+    for alt in result.get("alternatives", []):
+        comparison = build_comparison(alt)
+        comparisons.append(comparison)
+
     return {
         "extracted_text": extracted_text,
-        "alternatives": alternatives
+        "alternatives": result.get("alternatives", []),
+        "comparisons": comparisons,
+        "medicines_found": result.get("medicines_found", []),
+        "source": result.get("source", "")
     }
