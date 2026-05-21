@@ -143,6 +143,15 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
 
                     {/* Specifications Card */}
                     <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 space-y-4 shadow-sm">
+                      <div className="flex justify-between items-center text-sm border-b border-slate-100/80 pb-3">
+                        <span className="text-ayura-muted flex items-center gap-1.5">
+                          <Pill className="w-4 h-4 text-ayura-primary" /> Prescribed Brand
+                        </span>
+                        <span className="font-extrabold text-slate-800 text-base max-w-[200px] truncate text-right">
+                          {alt.brandName || alt.name}
+                        </span>
+                      </div>
+
                       <div className="flex justify-between items-start text-sm border-b border-slate-100/80 pb-3">
                         <span className="text-ayura-muted flex items-center gap-1.5">
                           <Building2 className="w-4 h-4 text-slate-400" /> Manufacturer
@@ -245,7 +254,7 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
                     {alt.janAushadhiAlternatives && alt.janAushadhiAlternatives.length > 0 ? (
                       <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
                         {alt.janAushadhiAlternatives.map((jaRow: any, jaIdx: number) => {
-                          const jaMRP = jaRow.MRP;
+                          const jaMRP = jaRow.mrp || jaRow.MRP || jaRow["MRP"] || 0;
                           const brandPrice = alt.brandPrice || 0;
                           const savingsPct = (brandPrice > 0 && jaMRP > 0) ? Math.round(((brandPrice - jaMRP) / brandPrice) * 100) : 0;
 
