@@ -64,7 +64,7 @@ function mapToComparisonResult(data: any): ComparisonResult | null {
   const originalMedicine = {
     id: "orig-1",
     name: firstData.brand_name || "Prescribed Medicine",
-    manufacturer: "As Prescribed",
+    manufacturer: firstData.manufacturer || "As Prescribed",
     activeIngredients: firstData.composition ? [firstData.composition] : ["Active Ingredient"],
     dosage: firstData.jan_aushadhi_unit || "As directed",
     price: firstData.brand_price_inr || 0,
@@ -104,7 +104,7 @@ function mapToComparisonResult(data: any): ComparisonResult | null {
     return {
       id: `gen-${index}`,
       name: alt.generic_alternative || alt.brand_name,
-      manufacturer: "Jan Aushadhi / Generic",
+      manufacturer: alt.manufacturer || "Jan Aushadhi / Generic",
       activeIngredients: alt.composition ? [alt.composition] : ["Same composition"],
       dosage: alt.jan_aushadhi_unit || "As directed",
       price: alt.generic_price_inr || 0,
@@ -115,13 +115,17 @@ function mapToComparisonResult(data: any): ComparisonResult | null {
       notFound: false,
       brandName: alt.brand_name,
       brandPrice: alt.brand_price_inr || 0,
+      brandManufacturer: alt.manufacturer || "As Searched",
+      image_url: alt.image_url || "",
+      janAushadhiAlternatives: alt.jan_aushadhi_alternatives || [],
       substitutes: alt.substitutes || [],
       sideEffects: alt.side_effects || [],
       uses: alt.uses || [],
       buyLinks: alt.buy_links || [],
-      janAushadhi: alt.jan_aushadhi || alt.notes || "",
+      janAushadhi: alt.notes || "",
       notes: alt.notes || "",
       savings: comp?.savings || null,
+      savingsPercent: alt.savings_percent || 0,
     };
   });
 
