@@ -1,8 +1,14 @@
-# Use official Python base image
-FROM python:3.10-slim
+# Use official Python base image (stable bookworm release)
+FROM python:3.10-slim-bookworm
+
+# Set non-interactive environment for package manager
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies (Tesseract OCR & required libraries)
-RUN apt-get update && apt-get install -y \
+# Uses clean, fix-missing and no-install-recommends for maximum build robustness
+RUN apt-get clean && \
+    apt-get update --fix-missing -y && \
+    apt-get install -y --no-install-recommends \
     tesseract-ocr \
     libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
