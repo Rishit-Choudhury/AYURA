@@ -22,6 +22,12 @@ interface AnalysisResultsProps {
 export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
   const { genericAlternatives, totalSavingsPercent } = results;
 
+  const formatPrice = (price: any) => {
+    if (price === undefined || price === null || price === 0 || price === "—") return "—";
+    const num = typeof price === 'number' ? price : parseFloat(String(price).replace(/[^0-9.]/g, ''));
+    return isNaN(num) ? "—" : `₹${num.toFixed(2)}`;
+  };
+
   return (
     <div className="container mx-auto px-4 py-16 max-w-6xl" id="results-section">
       {/* Header Section */}
@@ -104,21 +110,56 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                       <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-ayura-primary" />
-                        Prescribed Brand Details
+                        <Activity className="w-4 h-4 text-rose-500" />
+                        Prescribed Medicine Details
                       </h4>
-                      <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
+                      <span className="text-xs font-semibold text-rose-500 bg-rose-50 border border-rose-100/50 px-2.5 py-1 rounded-md">
                         Web Verified
                       </span>
                     </div>
 
+                    {/* Brand Name & Price Highlight Card (User alignment) */}
+                    <div className="bg-gradient-to-br from-rose-50/40 to-amber-50/20 border border-rose-100/70 rounded-3xl p-6 relative overflow-hidden shadow-sm">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="bg-rose-500/10 p-1.5 rounded-lg">
+                          <Pill className="w-4 h-4 text-rose-500 transform rotate-45" />
+                        </div>
+                        <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">
+                          Official Medicine
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                          <h4 className="text-2xl font-serif font-extrabold text-slate-800 tracking-tight leading-tight">
+                            {alt.brandName || alt.name}
+                          </h4>
+                          {alt.brandManufacturer && (
+                            <p className="text-xs text-slate-400 font-semibold mt-1">
+                              by {alt.brandManufacturer}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div className="bg-white/80 border border-rose-100 shadow-sm px-5 py-2.5 rounded-2xl flex flex-col items-center shrink-0">
+                          <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-0.5">Average Brand MRP</span>
+                          <span className="text-xl font-serif font-black text-rose-600">
+                            {formatPrice(alt.brandPrice)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Decorative soft glowing brand blob */}
+                      <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-rose-200/10 rounded-full blur-lg pointer-events-none" />
+                    </div>
+
                     {/* Image Container */}
-                    <div className="relative w-full rounded-[24px] overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center p-4 min-h-[220px] max-h-[260px] shadow-inner group">
+                    <div className="relative w-full rounded-[24px] overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center p-4 min-h-[180px] max-h-[220px] shadow-inner group">
                       {hasImage ? (
                         <img
                           src={alt.image_url}
                           alt={alt.brandName}
-                          className="w-auto h-full max-h-[220px] object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                          className="w-auto h-full max-h-[180px] object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             // Hide the broken image and show the illustration
                             (e.currentTarget as HTMLElement).style.display = 'none';
@@ -133,8 +174,8 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
                         className="flex flex-col items-center justify-center text-center p-6" 
                         style={{ display: hasImage ? 'none' : 'flex' }}
                       >
-                        <div className="w-16 h-16 rounded-full bg-ayura-primary/10 flex items-center justify-center mb-3">
-                          <Pill className="w-8 h-8 text-ayura-primary transform rotate-45" />
+                        <div className="w-14 h-14 rounded-full bg-ayura-primary/10 flex items-center justify-center mb-2">
+                          <Pill className="w-6 h-6 text-ayura-primary transform rotate-45" />
                         </div>
                         <p className="text-xs font-semibold text-slate-400">Packaging image not in database</p>
                         <p className="text-[10px] text-slate-300 mt-1">Showing composition details instead</p>
@@ -143,31 +184,6 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
 
                     {/* Specifications Card */}
                     <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 space-y-4 shadow-sm">
-                      <div className="flex justify-between items-center text-sm border-b border-slate-100/80 pb-3">
-                        <span className="text-ayura-muted flex items-center gap-1.5">
-                          <Pill className="w-4 h-4 text-ayura-primary" /> Prescribed Brand
-                        </span>
-                        <span className="font-extrabold text-slate-800 text-base max-w-[200px] truncate text-right">
-                          {alt.brandName || alt.name}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-start text-sm border-b border-slate-100/80 pb-3">
-                        <span className="text-ayura-muted flex items-center gap-1.5">
-                          <Building2 className="w-4 h-4 text-slate-400" /> Manufacturer
-                        </span>
-                        <span className="font-bold text-ayura-text text-right max-w-[200px] truncate">
-                          {alt.brandManufacturer || "Unknown Manufacturer"}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center text-sm border-b border-slate-100/80 pb-3">
-                        <span className="text-ayura-muted">Average Brand Price</span>
-                        <span className="font-semibold text-red-500 bg-red-50 border border-red-100 px-3 py-1 rounded-full text-sm">
-                          ₹{alt.brandPrice || "—"}
-                        </span>
-                      </div>
-
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">
                           Chemical Composition
@@ -254,7 +270,7 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
                     {alt.janAushadhiAlternatives && alt.janAushadhiAlternatives.length > 0 ? (
                       <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
                         {alt.janAushadhiAlternatives.map((jaRow: any, jaIdx: number) => {
-                          const jaMRP = jaRow.mrp || jaRow.MRP || jaRow["MRP"] || 0;
+                          const jaMRP = jaRow.mrp ?? jaRow.MRP ?? jaRow["MRP"] ?? jaRow.price ?? 0;
                           const brandPrice = alt.brandPrice || 0;
                           const savingsPct = (brandPrice > 0 && jaMRP > 0) ? Math.round(((brandPrice - jaMRP) / brandPrice) * 100) : 0;
 
@@ -283,7 +299,7 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
                               <div className="flex md:flex-col items-baseline md:items-end justify-between w-full md:w-auto border-t md:border-t-0 border-slate-100 pt-3 md:pt-0 z-10 shrink-0">
                                 <div className="text-right">
                                   <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Govt Kendra MRP</span>
-                                  <span className="text-xl font-extrabold text-emerald-600">₹{jaMRP}</span>
+                                  <span className="text-xl font-extrabold text-emerald-600">{formatPrice(jaMRP)}</span>
                                 </div>
                                 {savingsPct > 0 && (
                                   <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full mt-1.5 shadow-sm block animate-bounce">
