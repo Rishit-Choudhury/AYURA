@@ -115,6 +115,9 @@ def build_result(medicine_name: str, brand_price: float = 0) -> dict:
     brand = search_brand_db(medicine_name)
     sub_info = search_substitutes(medicine_name)
 
+    # Consider found if present in Jan Aushadhi, Brand meds DB, or Substitutes DB
+    found = (len(ja) > 0) or (len(brand) > 0) or (len(sub_info) > 0)
+
     if brand_price == 0 and brand:
         brand_price = brand[0]["price"]
 
@@ -125,9 +128,9 @@ def build_result(medicine_name: str, brand_price: float = 0) -> dict:
     savings = round(((brand_price - ja_price) / brand_price * 100)) if brand_price > 0 and ja_price > 0 else 0
 
     return {
-        "found": len(ja) > 0,
+        "found": found,
         "brand_name": medicine_name.title(),
-        "composition": brand[0]["composition"] if brand else "",
+        "composition": brand[0]["composition"] if brand else (sub_info.get("therapeutic_class") if sub_info else ""),
         "generic_alternative": ja_name,
         "brand_price_inr": brand_price,
         "generic_price_inr": ja_price,
@@ -141,7 +144,7 @@ def build_result(medicine_name: str, brand_price: float = 0) -> dict:
             f"https://www.1mg.com/search/all?name={medicine_name.replace(' ', '+')}",
             f"https://pharmeasy.in/search/all?name={medicine_name.replace(' ', '+')}"
         ],
-        "notes": f"Available at Jan Aushadhi Kendra for ₹{ja_price} per {ja_unit}" if ja_price else "Check Jan Aushadhi store"
+        "notes": f"Available at Jan Aushadhi Kendra for ₹{ja_price} per {ja_unit}" if ja_price else "No direct Jan Aushadhi alternative found"
     }
 
 def local_search(extracted_text: str) -> dict:
@@ -221,12 +224,30 @@ Return ONLY this JSON, no markdown, no explanation:
 def build_comparison(alt: dict) -> dict:
     brand_price = alt.get("brand_price_inr", 0)
     generic_price = alt.get("generic_price_inr", 0)
-    savings_amount = round(brand_price - generic_price, 2)
     savings_pct = alt.get("savings_percent", 0)
 
-    monthly_brand = round(brand_price * 3, 2)
-    monthly_generic = round(generic_price * 3, 2)
-    monthly_savings = round(monthly_brand - monthly_generic, 2)
+    has_generic = generic_price > 0 and alt.get("generic_alternative") != "Not in Jan Aushadhi"
+
+    if has_generic:
+        savings_amount = round(brand_price - generic_price, 2)
+        monthly_brand = round(brand_price * 3, 2)
+        monthly_generic = round(generic_price * 3, 2)
+        monthly_savings = round(monthly_brand - monthly_generic, 2)
+        verdict = (
+            "🟢 High savings — switch recommended" if savings_pct >= 50 else
+            "🟡 Moderate savings — consider switching" if savings_pct >= 20 else
+            "🔵 Low savings — your choice"
+        )
+        savings_info = {
+            "per_unit_inr": savings_amount,
+            "per_month_inr": monthly_savings,
+            "percent": savings_pct,
+            "verdict": verdict
+        }
+    else:
+        monthly_brand = round(brand_price * 3, 2) if brand_price > 0 else 0
+        monthly_generic = 0
+        savings_info = None
 
     return {
         "medicine": alt.get("brand_name", ""),
@@ -245,18 +266,9 @@ def build_comparison(alt: dict) -> dict:
             "price_inr": generic_price,
             "monthly_cost_inr": monthly_generic,
             "unit_size": alt.get("jan_aushadhi_unit", ""),
-            "available_at": "Jan Aushadhi Kendra (Govt Store)",
+            "available_at": "Jan Aushadhi Kendra (Govt Store)" if has_generic else "Commercial Brands",
             "substitutes": alt.get("substitutes", []),
             "buy_links": alt.get("buy_links", []),
         },
-        "savings": {
-            "per_unit_inr": savings_amount,
-            "per_month_inr": monthly_savings,
-            "percent": savings_pct,
-            "verdict": (
-                "🟢 High savings — switch recommended" if savings_pct >= 50 else
-                "🟡 Moderate savings — consider switching" if savings_pct >= 20 else
-                "🔵 Low savings — your choice"
-            )
-        }
+        "savings": savings_info
     }
