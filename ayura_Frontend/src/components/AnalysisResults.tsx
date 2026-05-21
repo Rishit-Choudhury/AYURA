@@ -68,7 +68,7 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
                     <div className="flex justify-between text-sm border-b border-ayura-border pb-3">
                       <span className="text-ayura-muted">Brand Price</span>
                       <span className="font-bold text-ayura-text line-through opacity-60">
-                        ₹{originalMedicine.price || "—"}
+                        ₹{alt.brandPrice || "—"}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm border-b border-ayura-border pb-3">

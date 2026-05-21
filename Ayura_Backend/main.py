@@ -40,7 +40,7 @@ async def upload_prescription(file: UploadFile = File(...)):
     for medicine_name in medicines_found:
         match = next((a for a in alternatives
                       if a.get("brand_name", "").lower() == medicine_name.lower()), None)
-        if match:
+        if match and match.get("found"):
             medicine_results.append({
                 "medicine_name": medicine_name,
                 "found": True,

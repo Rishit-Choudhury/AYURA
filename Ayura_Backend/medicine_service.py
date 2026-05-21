@@ -136,6 +136,7 @@ def build_result(medicine_name: str, brand_price: float = 0) -> dict:
     savings = round(((brand_price - ja_price) / brand_price * 100)) if brand_price > 0 and ja_price > 0 else 0
 
     return {
+        "found": len(ja) > 0,
         "brand_name": medicine_name.title(),
         "composition": brand[0]["composition"] if brand else "",
         "generic_alternative": ja_name,
@@ -202,7 +203,7 @@ Return ONLY this JSON, no markdown, no explanation:
 """
 
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(temperature=0.1)
         )

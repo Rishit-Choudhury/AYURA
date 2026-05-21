@@ -1,6 +1,6 @@
 import { ComparisonResult } from "../types";
 
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 
 export async function analyzeMedicine(
   input: string | { data: string; mimeType: string }

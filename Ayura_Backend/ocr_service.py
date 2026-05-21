@@ -1,8 +1,15 @@
+import os
 import pytesseract
 from PIL import Image
 import io
+from dotenv import load_dotenv
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+load_dotenv()
+
+pytesseract.pytesseract.tesseract_cmd = os.getenv(
+    "TESSERACT_CMD",
+    r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+)
 
 def extract_text_from_image(image_bytes: bytes, is_text: bool = False) -> str:
     if is_text:
