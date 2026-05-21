@@ -13,6 +13,7 @@ app.add_middleware(
 )
 
 @app.get("/")
+@app.head("/")
 def health_check():
     return {"status": "Ayura backend running"}
 
