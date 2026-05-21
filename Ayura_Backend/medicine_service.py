@@ -15,7 +15,8 @@ print("Loading datasets...")
 
 # 1. Jan Aushadhi
 try:
-    df_ja = pd.read_csv(os.path.join(BASE, "Product List_2_5_2026 @ 0_32_40.csv"), encoding="utf-8-sig")
+    ja_cols = ["Generic Name", "MRP", "Unit Size", "Group Name"]
+    df_ja = pd.read_csv(os.path.join(BASE, "Product List_2_5_2026 @ 0_32_40.csv"), usecols=ja_cols, encoding="utf-8-sig")
     df_ja.columns = df_ja.columns.str.strip()
     df_ja["Generic Name"] = df_ja["Generic Name"].str.lower().str.strip()
     print(f"✅ Jan Aushadhi: {len(df_ja)} medicines")
@@ -25,7 +26,8 @@ except Exception as e:
 
 # 2. India Medicines
 try:
-    df_brand = pd.read_csv(os.path.join(BASE, "India Medicines and Drug Info Dataset.csv"), encoding="utf-8-sig", low_memory=False)
+    brand_cols = ["Medicine Name", "Price", "Type of Medicine", "Composition"]
+    df_brand = pd.read_csv(os.path.join(BASE, "India Medicines and Drug Info Dataset.csv"), usecols=brand_cols, encoding="utf-8-sig", low_memory=False)
     df_brand.columns = df_brand.columns.str.strip()
     df_brand["Medicine Name"] = df_brand["Medicine Name"].str.lower().str.strip()
     df_brand["Composition"] = df_brand["Composition"].fillna("").str.lower().str.strip()
@@ -36,7 +38,11 @@ except Exception as e:
 
 # 3. Substitutes
 try:
-    df_sub = pd.read_csv(os.path.join(BASE, "med_daraset.csv"), encoding="utf-8-sig", low_memory=False)
+    sub_cols = ["name", "Therapeutic Class"]
+    sub_cols += [f"substitute{i}" for i in range(5)]
+    sub_cols += [f"sideEffect{i}" for i in range(10)]
+    sub_cols += [f"use{i}" for i in range(5)]
+    df_sub = pd.read_csv(os.path.join(BASE, "med_daraset.csv"), usecols=sub_cols, encoding="utf-8-sig", low_memory=False)
     df_sub.columns = df_sub.columns.str.strip()
     df_sub["name"] = df_sub["name"].str.lower().str.strip()
     print(f"✅ Substitutes DB: {len(df_sub)} medicines")
