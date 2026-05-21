@@ -1,5 +1,5 @@
-# Use official Python base image (stable bookworm release)
-FROM python:3.10-slim-bookworm
+# Use official Python base image (stable bookworm release with Python 3.11+)
+FROM python:3.11-slim-bookworm
 
 # Set non-interactive environment for package manager
 ENV DEBIAN_FRONTEND=noninteractive
