@@ -126,6 +126,7 @@ function mapToComparisonResult(data: any): ComparisonResult | null {
       notes: alt.notes || "",
       savings: comp?.savings || null,
       savingsPercent: alt.savings_percent || 0,
+      commercialAlternatives: alt.commercial_alternatives || [],
     };
   });
 

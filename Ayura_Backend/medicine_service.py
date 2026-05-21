@@ -30,6 +30,7 @@ Search the web for the Indian medicine: "{medicine_name}" and extract:
 6. "uses": A list of 2-3 primary medical uses.
 7. "side_effects": A list of 3-4 common side effects.
 8. "image_url": A direct public image source URL (ending in .jpg, .jpeg, .png, or from retailer CDNs like onemg.com/images/ or pharmeasy.in). It must be a direct URL to the image file, NOT a webpage. If not found, use a clean placeholder or leave blank.
+9. "commercial_alternatives": A list of 3-4 high-quality alternative commercial brand medicines sold in India for the same chemical composition or medical uses. Each alternative must be a dictionary with "name" (the brand name) and "price_inr" (the average price as a float, e.g., 120.0).
 
 Return ONLY a valid JSON object matching this structure, with no markdown formatting, no backticks, and no explanations:
 {{
@@ -40,10 +41,14 @@ Return ONLY a valid JSON object matching this structure, with no markdown format
   "therapeutic_class": "Therapeutic Class",
   "uses": ["use1", "use2"],
   "side_effects": ["side_effect1", "side_effect2"],
-  "image_url": "https://example.com/image.jpg"
+  "image_url": "https://example.com/image.jpg",
+  "commercial_alternatives": [
+    {{"name": "Alternative Brand 1", "price_inr": 120.0}},
+    {{"name": "Alternative Brand 2", "price_inr": 110.0}}
+  ]
 }}
 """
-    models_to_try = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"]
+    models_to_try = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"]
     last_err = None
     for model_name in models_to_try:
         try:
@@ -69,14 +74,76 @@ Return ONLY a valid JSON object matching this structure, with no markdown format
     print(f"All models failed for {medicine_name}. Last error: {last_err}")
     return {}
 
-def find_generic_alternatives_for_composition(composition: str) -> list:
-    """Parses chemical ingredients from a composition and queries local Jan Aushadhi database."""
+def normalize_text(t: str) -> str:
+    if not t:
+        return ""
+    # Lowercase, replace punctuation with spaces, and collapse multiple spaces
+    t = t.lower()
+    t = re.sub(r'[-/_(),.]', ' ', t)
+    return " " + " ".join(t.split()) + " "
+
+def are_classes_compatible(brand_class: str, brand_uses: list, alt_group: str) -> bool:
+    """Enforces therapeutic category compatibility to prevent showing wrong class drugs (e.g. hydrocortisone cream matching blood pressure tablet hydrochlorothiazide)."""
+    if not brand_class or not alt_group:
+        return True # Safety default to avoid false exclusions
+        
+    brand_class_norm = normalize_text(brand_class)
+    alt_group_norm = normalize_text(alt_group)
+    
+    categories = {
+        "derma": ["derma", "skin", "acne", "topical", "external", "burn", "footcare", "cleanser", "moisturizer", "cream", "gel", "ointment", "anti-acne", "eczema", "psoriasis"],
+        "analgesic": ["analgesic", "pain", "fever", "antipyretic", "inflammatory", "ortho", "gout", "nsaid", "arthritis", "spasm", "fissure", "hemorrhoid"],
+        "cns": ["cns", "central nervous", "neurological", "depression", "anxiety", "migraine", "sleep", "psychiatric", "anaesthetic", "seizure", "epilepsy", "convulsion", "alcoholism"],
+        "infection": ["antibiotic", "viral", "fungal", "infective", "infection", "tb", "tuberculosis", "malaria", "parasitic", "anthelmintic", "worm", "rabies", "retroviral", "antiseptic", "disinfectant", "covid"],
+        "diabetic": ["diabetic", "diabetes", "insulin", "sugar", "hypoglycemic"],
+        "cvs": ["cardiovascular", "cvs", "pressure", "hypertension", "cholesterol", "lipid", "anticoagulant", "coagulant", "diuretic", "heart", "nephrology", "angina"],
+        "supplement": ["supplement", "vitamin", "mineral", "calcium", "iron", "nutrition", "electrolyte", "nutraceutical", "erythropoiesis"],
+        "respiratory": ["respiratory", "cough", "cold", "asthma", "allergy", "histamine", "bronchodilator", "congestion"],
+        "hormone": ["hormone", "steroid", "gynaecology", "ovary", "ovarian", "contraceptive", "thyroid", "estrogen", "progesterone"],
+        "dental": ["stomatological", "dental", "mouth", "throat", "oral", "dentifrice"],
+        "urology": ["urology", "urinary", "prostate", "kidney"],
+        "ophthalmic": ["ophthalmic", "otic", "eye", "ear"],
+        "oncology": ["oncology", "cancer", "tumor", "chemo"]
+    }
+    
+    brand_cats = set()
+    for cat, keywords in categories.items():
+        if any(kw in brand_class_norm for kw in keywords):
+            brand_cats.add(cat)
+        if brand_uses:
+            for use in brand_uses:
+                use_norm = normalize_text(use)
+                if any(kw in use_norm for kw in keywords):
+                    brand_cats.add(cat)
+                    
+    if not brand_cats:
+        return True
+        
+    alt_cats = set()
+    for cat, keywords in categories.items():
+        if any(kw in alt_group_norm for kw in keywords):
+            alt_cats.add(cat)
+            
+    if not alt_cats:
+        return True
+        
+    return len(brand_cats.intersection(alt_cats)) > 0
+
+def find_generic_alternatives_for_composition(composition: str, therapeutic_class: str = "", uses: list = []) -> list:
+    """Parses chemical ingredients and queries local Jan Aushadhi DB with strict therapeutic category matching."""
     if not composition:
         return []
     
     # Extract ingredient keywords of length > 4
     words = re.findall(r'[a-zA-Z]{5,}', composition.lower())
-    ignore_words = {"tablet", "capsule", "cream", "ointment", "percent", "gel", "injection", "solution", "suspension", "liquid"}
+    ignore_words = {
+        "tablet", "capsule", "cream", "ointment", "percent", "gel", "injection", "solution", "suspension", "liquid",
+        "sodium", "potassium", "calcium", "hydrochloride", "chloride", "maleate", "sulphate", "sulfate", "phosphate", 
+        "acetate", "mesylate", "tartrate", "fumarate", "succinate", "valerate", "dipropionate", "propionate", 
+        "salicylate", "hydrate", "dihydrate", "monohydrate", "anhydrous", "water", "acid", "citrate", "carbonate", 
+        "bicarbonate", "gluconate", "lactate", "nitrate", "oxide", "hydroxide", "stearate", "palmitate", "oleate", 
+        "laurate", "myristate", "base"
+    }
     ingredients = [w for w in words if w not in ignore_words]
     
     if not ingredients:
@@ -89,10 +156,16 @@ def find_generic_alternatives_for_composition(composition: str) -> list:
         for ing in ingredients[:2]:  # Search up to first two active ingredients
             cur.execute(
                 'SELECT "Generic Name", "MRP", "Unit Size", "Group Name" FROM jan_aushadhi '
-                'WHERE "Generic Name" LIKE ? LIMIT 3',
+                'WHERE "Generic Name" LIKE ? LIMIT 5',
                 (f"%{ing}%",)
             )
-            matches.extend(cur.fetchall())
+            rows = cur.fetchall()
+            # Strict therapeutic category filter to remove other-class drugs
+            filtered_rows = [
+                row for row in rows 
+                if are_classes_compatible(therapeutic_class, uses, row["Group Name"])
+            ]
+            matches.extend(filtered_rows)
         conn.close()
     except Exception as e:
         print(f"Jan Aushadhi matching error: {e}")
@@ -206,10 +279,18 @@ def search_substitutes(medicine_name: str) -> dict:
     }
 
 def build_result(medicine_name: str, brand_price: float = 0) -> dict:
-    # 1. Fetch real-time price & details from the web first via Google Search grounding
-    web = fetch_medicine_details_from_web(medicine_name)
+    # Check if the medicine is already in the local database with valid data
+    brand = search_brand_db(medicine_name)
+    sub_info = search_substitutes(medicine_name)
     
+    web = None
+    # We call web search grounding only if the brand is not in our database or has no composition
+    if not brand or not brand[0].get("composition"):
+        web = fetch_medicine_details_from_web(medicine_name)
+        
     image_url = ""
+    commercial_alts = []
+    
     if web:
         # Use web details as primary
         exact_name = web.get("brand_name", medicine_name).title()
@@ -219,26 +300,21 @@ def build_result(medicine_name: str, brand_price: float = 0) -> dict:
         uses = web.get("uses", [])
         side_effects = web.get("side_effects", [])
         image_url = web.get("image_url", "")
-        
-        # Query 3-4 local Jan Aushadhi alternatives matching this composition
-        ja = find_generic_alternatives_for_composition(composition)
-        
-        # Query local substitutes for additional commercial alternatives
-        sub_info = search_substitutes(exact_name)
-        substitutes = sub_info.get("substitutes", [])
+        commercial_alts = web.get("commercial_alternatives", [])
     else:
-        # Fallback to local database search if web grounding is completely unavailable
-        exact_name = medicine_name.title()
-        brand = search_brand_db(medicine_name)
-        ja = search_jan_aushadhi(medicine_name)
-        sub_info = search_substitutes(medicine_name)
-        
-        price = brand[0]["price"] if (brand_price == 0 and brand) else brand_price
+        # Use local database cache (or fallback to local if web search failed)
+        exact_name = brand[0]["medicine_name"] if brand else medicine_name.title()
+        price = brand[0]["price"] if (brand_price == 0 and brand) else (brand_price or 0)
         composition = brand[0]["composition"] if brand else (sub_info.get("therapeutic_class") if sub_info else "")
-        therapeutic_class = sub_info.get("therapeutic_class", "")
-        uses = sub_info.get("uses", [])
-        side_effects = sub_info.get("side_effects", [])
-        substitutes = sub_info.get("substitutes", [])
+        therapeutic_class = sub_info.get("therapeutic_class", "") if sub_info else ""
+        uses = sub_info.get("uses", []) if sub_info else []
+        side_effects = sub_info.get("side_effects", []) if sub_info else []
+        image_url = ""
+        commercial_alts = []
+        
+    # Query 3-4 local Jan Aushadhi alternatives matching this composition
+    ja = find_generic_alternatives_for_composition(composition, therapeutic_class, uses)
+    substitutes = sub_info.get("substitutes", []) if sub_info else []
 
     # If local substitutes are empty, try searching substitutes using first ingredient name
     if not substitutes and composition:
@@ -267,6 +343,7 @@ def build_result(medicine_name: str, brand_price: float = 0) -> dict:
         "jan_aushadhi_unit": ja_unit,
         "jan_aushadhi_alternatives": ja,
         "substitutes": substitutes,
+        "commercial_alternatives": commercial_alts,
         "side_effects": side_effects,
         "uses": uses,
         "therapeutic_class": therapeutic_class,
@@ -339,7 +416,7 @@ Return ONLY this JSON, no markdown, no explanation:
 {{"medicines": ["medicine1", "medicine2"]}}
 """
 
-        models_to_try = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"]
+        models_to_try = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"]
         parsed = None
         for model_name in models_to_try:
             try:

@@ -16,6 +16,18 @@ export interface Medicine {
   clinicalNotes?: string;
   notes?: string;
   buy_links?: string[];
+  brandName?: string;
+  brandPrice?: number;
+  brandManufacturer?: string;
+  image_url?: string;
+  janAushadhiAlternatives?: any[];
+  substitutes?: string[];
+  sideEffects?: string[];
+  janAushadhi?: string;
+  savings?: any;
+  savingsPercent?: number;
+  commercialAlternatives?: Array<{ name: string; price_inr: number | null }>;
+  notFound?: boolean;
 }
 
 export interface ComparisonResult {

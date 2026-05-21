@@ -314,42 +314,97 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
                           );
                         })}
                       </div>
-                    ) : (
-                      /* Fallback to commercial substitutes if no Jan Aushadhi generic row is in DB */
-                      <div className="space-y-4">
-                        <div className="flex gap-3 text-xs text-slate-500 bg-slate-50 border border-slate-100 p-4 rounded-2xl leading-relaxed">
-                          <Info className="w-5 h-5 shrink-0 text-slate-400" />
-                          <span>
-                            No direct government Jan Aushadhi Kendra alternatives were found matching this chemical composition. However, here are verified high-quality commercial brand substitutes:
-                          </span>
-                        </div>
+                    ) : (() => {
+                      const rawAlts = [
+                        ...(alt.commercialAlternatives || []).map((c: any) => ({ name: c.name || c.brand_name, price: c.price_inr ?? c.price ?? null })),
+                        ...(alt.substitutes || []).map((subName: string) => ({ name: subName, price: null }))
+                      ];
+                      
+                      const uniqueAlts: Array<{ name: string; price: number | null }> = [];
+                      const seenNames = new Set();
+                      for (const item of rawAlts) {
+                        if (!item.name) continue;
+                        const norm = item.name.trim().toLowerCase();
+                        if (!seenNames.has(norm)) {
+                          seenNames.add(norm);
+                          uniqueAlts.push(item);
+                        }
+                      }
+                      
+                      return (
+                        <div className="space-y-4">
+                          <div className="flex gap-3 text-xs text-slate-500 bg-slate-50 border border-slate-100 p-4 rounded-2xl leading-relaxed">
+                            <Info className="w-5 h-5 shrink-0 text-slate-400" />
+                            <span>
+                              No direct government Jan Aushadhi Kendra alternatives were found matching this chemical composition. However, here are verified high-quality commercial brand substitutes:
+                            </span>
+                          </div>
 
-                        {alt.substitutes?.length > 0 ? (
-                          <div className="grid grid-cols-1 gap-2.5">
-                            {alt.substitutes.slice(0, 4).map((sub: string, subIdx: number) => (
-                              <div 
-                                key={subIdx} 
-                                className="bg-white border border-slate-100 px-4 py-3 rounded-2xl flex items-center justify-between text-sm font-semibold text-slate-700 shadow-sm hover:border-slate-300 transition-all duration-200"
-                              >
-                                <span className="flex items-center gap-2">
-                                  <span className="w-2.5 h-2.5 bg-slate-300 rounded-full" />
-                                  {sub}
-                                </span>
-                                <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg">
-                                  Commercial Alternative
-                                </span>
-                              </div>
-                            ))}
+                          {uniqueAlts.length > 0 ? (
+                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                              {uniqueAlts.slice(0, 4).map((sub, subIdx) => {
+                                const redirect1mg = `https://www.1mg.com/search/all?name=${encodeURIComponent(sub.name)}`;
+                                const redirectPharmeasy = `https://pharmeasy.in/search/all?name=${encodeURIComponent(sub.name)}`;
+                                
+                                return (
+                                  <motion.div
+                                    key={subIdx}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: subIdx * 0.1 }}
+                                    className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-300 flex flex-col gap-4 relative overflow-hidden"
+                                  >
+                                    <div className="flex justify-between items-start gap-4">
+                                      <div className="space-y-1">
+                                        <span className="text-[9px] font-extrabold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full tracking-wider uppercase border border-blue-100/50">
+                                          Commercial Alternative #{subIdx + 1}
+                                        </span>
+                                        <h5 className="text-md font-bold text-slate-800 leading-tight pt-1">
+                                          {sub.name}
+                                        </h5>
+                                      </div>
+                                      
+                                      {sub.price !== null && sub.price > 0 && (
+                                        <div className="text-right shrink-0">
+                                          <span className="text-[9px] text-slate-400 block uppercase tracking-wider font-semibold">Est. Brand MRP</span>
+                                          <span className="text-md font-extrabold text-slate-700">{formatPrice(sub.price)}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-50">
+                                      <button
+                                        onClick={() => window.open(redirect1mg, "_blank")}
+                                        className="flex items-center justify-center gap-1.5 text-[10px] font-black py-2.5 px-3 text-white rounded-xl bg-[#ff6f61] hover:bg-[#e05648] shadow-sm transition-all duration-300"
+                                      >
+                                        <span className="w-3.5 h-3.5 rounded-full bg-white text-[#ff6f61] flex items-center justify-center text-[6px]">1mg</span>
+                                        <span>Buy on 1mg</span>
+                                        <ExternalLink className="w-2.5 h-2.5 opacity-80" />
+                                      </button>
+                                      
+                                      <button
+                                        onClick={() => window.open(redirectPharmeasy, "_blank")}
+                                        className="flex items-center justify-center gap-1.5 text-[10px] font-black py-2.5 px-3 text-white rounded-xl bg-[#10847e] hover:bg-[#0e746e] shadow-sm transition-all duration-300"
+                                      >
+                                        <span className="w-3.5 h-3.5 rounded-full bg-white text-[#10847e] flex items-center justify-center text-[6px]">PE</span>
+                                        <span>Buy on PharmEasy</span>
+                                        <ExternalLink className="w-2.5 h-2.5 opacity-80" />
+                                      </button>
+                                    </div>
+                                  </motion.div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="p-6 border border-dashed border-slate-200 rounded-3xl text-center">
+                              <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                              <p className="text-xs font-semibold text-slate-400">No substitutes found in catalog</p>
+                              <p className="text-[10px] text-slate-300 mt-1">Please ask your chemist for comparable brands.</p>
+                            </div>
+                          )}
                           </div>
-                        ) : (
-                          <div className="p-6 border border-dashed border-slate-200 rounded-3xl text-center">
-                            <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                            <p className="text-xs font-semibold text-slate-400">No substitutes found in local catalog</p>
-                            <p className="text-[10px] text-slate-300 mt-1">Please ask your chemist for comparable brands.</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                        );
+                      })()}
 
                     {/* Jan Aushadhi Kendra Information Card */}
                     <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 flex gap-4 items-start shadow-sm mt-4">
