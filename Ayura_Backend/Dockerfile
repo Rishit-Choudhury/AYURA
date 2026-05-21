@@ -23,6 +23,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend source files and datasets
 COPY . .
 
+# Compile CSVs to SQLite and discard raw CSV files to minimize container footprint
+RUN python convert_to_sqlite.py && rm -f *.csv
+
 # Set environment variables
 ENV TESSERACT_CMD=tesseract
 ENV PORT=8000

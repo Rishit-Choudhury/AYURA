@@ -1,6 +1,6 @@
 import os
 import json
-import pandas as pd
+import sqlite3
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -11,55 +11,28 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 BASE = os.path.dirname(__file__)
 
-print("Loading datasets...")
-
-# 1. Jan Aushadhi
-try:
-    ja_cols = ["Generic Name", "MRP", "Unit Size", "Group Name"]
-    df_ja = pd.read_csv(os.path.join(BASE, "Product List_2_5_2026 @ 0_32_40.csv"), usecols=ja_cols, encoding="utf-8-sig")
-    df_ja.columns = df_ja.columns.str.strip()
-    df_ja["Generic Name"] = df_ja["Generic Name"].str.lower().str.strip()
-    print(f"✅ Jan Aushadhi: {len(df_ja)} medicines")
-except Exception as e:
-    df_ja = pd.DataFrame()
-    print(f"❌ Jan Aushadhi failed: {e}")
-
-# 2. India Medicines
-try:
-    brand_cols = ["Medicine Name", "Price", "Type of Medicine", "Composition"]
-    df_brand = pd.read_csv(os.path.join(BASE, "India Medicines and Drug Info Dataset.csv"), usecols=brand_cols, encoding="utf-8-sig", low_memory=False)
-    df_brand.columns = df_brand.columns.str.strip()
-    df_brand["Medicine Name"] = df_brand["Medicine Name"].str.lower().str.strip()
-    df_brand["Composition"] = df_brand["Composition"].fillna("").str.lower().str.strip()
-    print(f"✅ Brand DB: {len(df_brand)} medicines")
-except Exception as e:
-    df_brand = pd.DataFrame()
-    print(f"❌ Brand DB failed: {e}")
-
-# 3. Substitutes
-try:
-    sub_cols = ["name", "Therapeutic Class"]
-    sub_cols += [f"substitute{i}" for i in range(5)]
-    sub_cols += [f"sideEffect{i}" for i in range(10)]
-    sub_cols += [f"use{i}" for i in range(5)]
-    df_sub = pd.read_csv(os.path.join(BASE, "med_daraset.csv"), usecols=sub_cols, encoding="utf-8-sig", low_memory=False)
-    df_sub.columns = df_sub.columns.str.strip()
-    df_sub["name"] = df_sub["name"].str.lower().str.strip()
-    print(f"✅ Substitutes DB: {len(df_sub)} medicines")
-except Exception as e:
-    df_sub = pd.DataFrame()
-    print(f"❌ Substitutes DB failed: {e}")
-
-print("All datasets loaded.")
-
+def get_db_connection():
+    db_path = os.path.join(BASE, "ayura.db")
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def search_jan_aushadhi(medicine_name: str) -> list:
-    if df_ja.empty:
-        return []
-    mask = df_ja["Generic Name"].str.contains(medicine_name.lower(), na=False, regex=False)
-    results = df_ja[mask].head(3)
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            'SELECT "Generic Name", "MRP", "Unit Size", "Group Name" FROM jan_aushadhi WHERE "Generic Name" LIKE ? LIMIT 3',
+            (f"%{medicine_name.lower()}%",)
+        )
+        rows = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Jan Aushadhi DB error: {e}")
+        rows = []
+
     out = []
-    for _, row in results.iterrows():
+    for row in rows:
         out.append({
             "generic_name": str(row["Generic Name"]).title(),
             "mrp": row["MRP"],
@@ -68,17 +41,24 @@ def search_jan_aushadhi(medicine_name: str) -> list:
         })
     return out
 
-
 def search_brand_db(medicine_name: str) -> list:
-    if df_brand.empty:
-        return []
-    name_lower = medicine_name.lower()
-    mask = (df_brand["Medicine Name"].str.contains(name_lower, na=False, regex=False) |
-            df_brand["Composition"].str.contains(name_lower, na=False, regex=False))
-    results = df_brand[mask].head(3)
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            'SELECT "Medicine Name", "Price", "Type of Medicine", "Composition" FROM brand_meds '
+            'WHERE "Medicine Name" LIKE ? OR "Composition" LIKE ? LIMIT 3',
+            (f"%{medicine_name.lower()}%", f"%{medicine_name.lower()}%")
+        )
+        rows = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Brand DB error: {e}")
+        rows = []
+
     out = []
-    for _, row in results.iterrows():
-        price_raw = str(row.get("Price", "0")).replace("₹", "").replace(",", "").strip()
+    for row in rows:
+        price_raw = str(row["Price"] or "0").replace("₹", "").replace(",", "").strip()
         try:
             price = float(price_raw)
         except:
@@ -86,46 +66,49 @@ def search_brand_db(medicine_name: str) -> list:
         out.append({
             "medicine_name": str(row["Medicine Name"]).title(),
             "price": price,
-            "composition": str(row.get("Composition", "")).title(),
-            "type": str(row.get("Type of Medicine", ""))
+            "composition": str(row["Composition"] or "").title(),
+            "type": str(row["Type of Medicine"] or "")
         })
     return out
 
-
 def search_substitutes(medicine_name: str) -> dict:
-    if df_sub.empty:
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM substitutes WHERE "name" LIKE ? LIMIT 1', (f"%{medicine_name.lower()}%",))
+        row = cur.fetchone()
+        conn.close()
+    except Exception as e:
+        print(f"Substitutes DB error: {e}")
+        row = None
+
+    if not row:
         return {}
-    mask = df_sub["name"].str.contains(medicine_name.lower(), na=False, regex=False)
-    results = df_sub[mask].head(1)
-    if results.empty:
-        return {}
-    row = results.iloc[0]
 
     subs = []
     for i in range(5):
-        val = row.get(f"substitute{i}", "")
-        if pd.notna(val) and str(val).strip():
+        val = row[f"substitute{i}"]
+        if val is not None and str(val).strip():
             subs.append(str(val).strip())
 
     effects = []
     for i in range(10):
-        val = row.get(f"sideEffect{i}", "")
-        if pd.notna(val) and str(val).strip():
+        val = row[f"sideEffect{i}"]
+        if val is not None and str(val).strip():
             effects.append(str(val).strip())
 
     uses = []
     for i in range(5):
-        val = row.get(f"use{i}", "")
-        if pd.notna(val) and str(val).strip():
+        val = row[f"use{i}"]
+        if val is not None and str(val).strip():
             uses.append(str(val).strip())
 
     return {
         "substitutes": subs,
         "side_effects": effects[:5],
         "uses": uses,
-        "therapeutic_class": str(row.get("Therapeutic Class", ""))
+        "therapeutic_class": str(row["Therapeutic Class"] or "")
     }
-
 
 def build_result(medicine_name: str, brand_price: float = 0) -> dict:
     ja = search_jan_aushadhi(medicine_name)
@@ -161,23 +144,30 @@ def build_result(medicine_name: str, brand_price: float = 0) -> dict:
         "notes": f"Available at Jan Aushadhi Kendra for ₹{ja_price} per {ja_unit}" if ja_price else "Check Jan Aushadhi store"
     }
 
-
 def local_search(extracted_text: str) -> dict:
     """Fallback — search only Jan Aushadhi DB to avoid false matches."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT DISTINCT "Generic Name" FROM jan_aushadhi')
+        rows = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Local search DB error: {e}")
+        rows = []
+
     text_lower = extracted_text.lower()
     found = []
-
-    if not df_ja.empty:
-        for _, row in df_ja.iterrows():
-            generic = str(row["Generic Name"]).lower()
-            words = [w for w in generic.split() if len(w) > 4]
-            if not words:
-                continue
-            key = words[0]
-            if key in text_lower and key not in found:
-                found.append(key)
-            if len(found) >= 8:
-                break
+    for row in rows:
+        generic = str(row["Generic Name"] or "").lower()
+        words = [w for w in generic.split() if len(w) > 4]
+        if not words:
+            continue
+        key = words[0]
+        if key in text_lower and key not in found:
+            found.append(key)
+        if len(found) >= 8:
+            break
 
     alternatives = [build_result(m) for m in found]
     return {
@@ -185,7 +175,6 @@ def local_search(extracted_text: str) -> dict:
         "alternatives": alternatives,
         "source": "local_db"
     }
-
 
 def find_generic_alternatives(extracted_text: str) -> dict:
     try:
@@ -228,7 +217,6 @@ Return ONLY this JSON, no markdown, no explanation:
 
     except Exception:
         return local_search(extracted_text)
-
 
 def build_comparison(alt: dict) -> dict:
     brand_price = alt.get("brand_price_inr", 0)
