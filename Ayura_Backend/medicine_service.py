@@ -129,20 +129,29 @@ def are_classes_compatible(brand_class: str, brand_uses: list, alt_group: str) -
         
     return len(brand_cats.intersection(alt_cats)) > 0
 
-def find_generic_alternatives_for_composition(composition: str, therapeutic_class: str = "", uses: list = []) -> list:
+def find_generic_alternatives_for_composition(composition: str, therapeutic_class: str = "", uses: list = [], type_of_med: str = "") -> list:
     """Parses chemical ingredients and queries local Jan Aushadhi DB with strict therapeutic category matching."""
-    if not composition:
+    text = (composition or "") + " " + (type_of_med or "")
+    if not text.strip():
         return []
     
+    # Split joined words (camelCase) and adjacent letters/numbers to separate merged tokens
+    text_processed = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
+    text_processed = re.sub(r'([0-9])([a-zA-Z])', r'\1 \2', text_processed)
+    text_processed = re.sub(r'([a-zA-Z])([0-9])', r'\1 \2', text_processed)
+    
     # Extract ingredient keywords of length > 4
-    words = re.findall(r'[a-zA-Z]{5,}', composition.lower())
+    words = re.findall(r'[a-zA-Z]{5,}', text_processed.lower())
     ignore_words = {
-        "tablet", "capsule", "cream", "ointment", "percent", "gel", "injection", "solution", "suspension", "liquid",
+        "tablet", "tablets", "capsule", "capsules", "cream", "creams", "ointment", "ointments", "percent", "gel", "gels", 
+        "injection", "injections", "solution", "solutions", "suspension", "suspensions", "liquid", "liquids",
         "sodium", "potassium", "calcium", "hydrochloride", "chloride", "maleate", "sulphate", "sulfate", "phosphate", 
         "acetate", "mesylate", "tartrate", "fumarate", "succinate", "valerate", "dipropionate", "propionate", 
         "salicylate", "hydrate", "dihydrate", "monohydrate", "anhydrous", "water", "acid", "citrate", "carbonate", 
         "bicarbonate", "gluconate", "lactate", "nitrate", "oxide", "hydroxide", "stearate", "palmitate", "oleate", 
-        "laurate", "myristate", "base"
+        "laurate", "myristate", "base", "gelatin", "gelatins", "softgel", "softgels", "strip", "strips", "intas", 
+        "pharmaceuticals", "limited", "company", "laboratory", "laboratories", "abbott", "cipla", "sun", "lupin",
+        "ranbaxy", "cadila", "alembic", "torrent", "zydus", "glenmark", "drreddy", "biocon", "wockhardt", "softgelatin"
     }
     ingredients = [w for w in words if w not in ignore_words]
     
@@ -313,7 +322,8 @@ def build_result(medicine_name: str, brand_price: float = 0) -> dict:
         commercial_alts = []
         
     # Query 3-4 local Jan Aushadhi alternatives matching this composition
-    ja = find_generic_alternatives_for_composition(composition, therapeutic_class, uses)
+    type_of_med = brand[0]["type"] if brand else ""
+    ja = find_generic_alternatives_for_composition(composition, therapeutic_class, uses, type_of_med)
     substitutes = sub_info.get("substitutes", []) if sub_info else []
 
     # If local substitutes are empty, try searching substitutes using first ingredient name

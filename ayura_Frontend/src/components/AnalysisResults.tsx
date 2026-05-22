@@ -223,35 +223,40 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
                     </div>
 
                     {/* Dynamic styled buy buttons with brand colors and logos */}
-                    {alt.buyLinks?.length > 0 && (
-                      <div className="space-y-2.5 pt-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                          Compare Online Retailers
-                        </span>
-                        <div className="grid grid-cols-2 gap-3">
-                          {alt.buyLinks.map((linkObj: any, i: number) => {
-                            const storeName = linkObj.store || (i === 0 ? "Tata 1mg" : "PharmEasy");
-                            const is1mg = storeName.toLowerCase().includes("1mg");
-                            const btnColor = is1mg ? "hover:bg-[#e05648] bg-[#ff6f61]" : "hover:bg-[#0e746e] bg-[#10847e]";
-                            const logoText = is1mg ? "1mg" : "PE";
-                            
-                            return (
-                              <button
-                                key={i}
-                                onClick={() => window.open(linkObj.url, "_blank")}
-                                className={`flex items-center justify-center gap-2 text-xs font-bold py-3.5 px-4 text-white rounded-2xl shadow-sm transition-all duration-300 ${btnColor}`}
-                              >
-                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black ${is1mg ? 'bg-white text-[#ff6f61]' : 'bg-white text-[#10847e]'}`}>
-                                  {logoText}
-                                </span>
-                                <span>Buy on {storeName}</span>
-                                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-                              </button>
-                            );
-                          })}
-                        </div>
+                    <div className="space-y-3.5 pt-4 border-t border-slate-100">
+                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+                        Search or Buy Original
+                      </span>
+                      <div className="flex flex-wrap gap-3">
+                        <a
+                          href={`https://www.1mg.com/search/all?name={encodeURIComponent(alt.brandName || alt.name)}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.open(`https://www.1mg.com/search/all?name=${encodeURIComponent(alt.brandName || alt.name)}`, "_blank");
+                          }}
+                          className="flex items-center gap-1.5 bg-white hover:bg-orange-50/50 border border-slate-200 hover:border-[#ff6f61] px-4.5 py-2.5 rounded-2xl shadow-sm hover:shadow transition-all duration-300 group cursor-pointer"
+                        >
+                          <span className="text-slate-800 font-extrabold text-xs tracking-tight group-hover:text-slate-900 transition-colors">tata</span>
+                          <span className="bg-[#ff6f61] text-white text-[9px] font-black px-2 py-0.5 rounded-[4px] uppercase tracking-wide">1mg</span>
+                          <span className="text-[10px] text-slate-400 ml-1 font-semibold group-hover:text-[#ff6f61] transition-colors">Store</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#ff6f61] transition-all ml-0.5" />
+                        </a>
+
+                        <a
+                          href={`https://pharmeasy.in/search/all?name={encodeURIComponent(alt.brandName || alt.name)}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.open(`https://pharmeasy.in/search/all?name=${encodeURIComponent(alt.brandName || alt.name)}`, "_blank");
+                          }}
+                          className="flex items-center gap-1.5 bg-white hover:bg-teal-50/50 border border-slate-200 hover:border-[#10847e] px-4.5 py-2.5 rounded-2xl shadow-sm hover:shadow transition-all duration-300 group cursor-pointer"
+                        >
+                          <span className="text-[#10847e] font-black text-xs tracking-tight">Pharm</span>
+                          <span className="text-[#f9b115] font-black text-xs tracking-tight">Easy</span>
+                          <span className="text-[10px] text-slate-400 ml-1 font-semibold group-hover:text-[#10847e] transition-colors">Store</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#10847e] transition-all ml-0.5" />
+                        </a>
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Right Column: Jan Aushadhi & Substitutes (Aside / Side-by-Side) */}
@@ -259,152 +264,183 @@ export const AnalysisResults = ({ results }: AnalysisResultsProps) => {
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                       <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                         <Pill className="w-4 h-4 text-emerald-500" />
-                        Generic / Jan Aushadhi Alternatives
+                        Alternative Options
                       </h4>
                       <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100 shadow-sm">
-                        Govt Kendra DB
+                        Ayura Curated
                       </span>
                     </div>
 
-                    {/* Jan Aushadhi matches loop */}
-                    {alt.janAushadhiAlternatives && alt.janAushadhiAlternatives.length > 0 ? (
-                      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                        {alt.janAushadhiAlternatives.map((jaRow: any, jaIdx: number) => {
-                          const jaMRP = jaRow.mrp ?? jaRow.MRP ?? jaRow["MRP"] ?? jaRow.price ?? 0;
-                          const brandPrice = alt.brandPrice || 0;
-                          const savingsPct = (brandPrice > 0 && jaMRP > 0) ? Math.round(((brandPrice - jaMRP) / brandPrice) * 100) : 0;
+                    {/* Section 1: Jan Aushadhi generic alternative if available */}
+                    <div className="space-y-3.5">
+                      <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100/50 shadow-sm inline-block uppercase tracking-wider">
+                        1. Jan Aushadhi Generic Option
+                      </span>
+                      {alt.janAushadhiAlternatives && alt.janAushadhiAlternatives.length > 0 ? (
+                        <div className="space-y-3">
+                          {alt.janAushadhiAlternatives.slice(0, 2).map((jaRow: any, jaIdx: number) => {
+                            const jaMRP = jaRow.mrp ?? jaRow.MRP ?? jaRow["MRP"] ?? jaRow.price ?? 0;
+                            const brandPrice = alt.brandPrice || 0;
+                            const savingsPct = (brandPrice > 0 && jaMRP > 0) ? Math.round(((brandPrice - jaMRP) / brandPrice) * 100) : 0;
 
-                          return (
-                            <motion.div
-                              key={jaIdx}
-                              initial={{ opacity: 0, x: 20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: jaIdx * 0.1 }}
-                              className="bg-gradient-to-br from-emerald-50/30 to-teal-50/20 border border-emerald-100 rounded-3xl p-5 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all duration-300 flex flex-col md:flex-row justify-between gap-4 items-start md:items-center relative overflow-hidden"
-                            >
-                              <div className="space-y-1.5 flex-1 z-10">
-                                <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full tracking-wider uppercase">
-                                  Alternative #{jaIdx + 1}
-                                </span>
-                                <h5 className="text-md font-bold text-slate-800 leading-tight">
-                                  {jaRow.generic_name || jaRow["Generic Name"]}
-                                </h5>
-                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-                                  <span>Unit Size: <strong className="text-slate-700">{jaRow.unit_size || jaRow["Unit Size"]}</strong></span>
-                                  <span>•</span>
-                                  <span>Class: <strong className="text-slate-700">{jaRow.group || jaRow["Group Name"]}</strong></span>
-                                </div>
-                              </div>
-
-                              <div className="flex md:flex-col items-baseline md:items-end justify-between w-full md:w-auto border-t md:border-t-0 border-slate-100 pt-3 md:pt-0 z-10 shrink-0">
-                                <div className="text-right">
-                                  <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Govt Kendra MRP</span>
-                                  <span className="text-xl font-extrabold text-emerald-600">{formatPrice(jaMRP)}</span>
-                                </div>
-                                {savingsPct > 0 && (
-                                  <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full mt-1.5 shadow-sm block animate-bounce">
-                                    Save {savingsPct}%
+                            return (
+                              <motion.div
+                                key={jaIdx}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: jaIdx * 0.1 }}
+                                className="bg-gradient-to-br from-emerald-50/40 to-teal-50/20 border border-emerald-100 rounded-3xl p-5 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all duration-300 flex flex-col md:flex-row justify-between gap-4 items-start md:items-center relative overflow-hidden"
+                              >
+                                <div className="space-y-1.5 flex-1 z-10">
+                                  <span className="text-[9px] font-extrabold text-emerald-800 bg-emerald-100/80 border border-emerald-200/50 px-2.5 py-0.5 rounded-full tracking-wider uppercase">
+                                    PMBJP Generic Alternative
                                   </span>
-                                )}
-                              </div>
-                              
-                              {/* Decorative soft glowing green background blob */}
-                              <div className="absolute right-0 bottom-0 w-24 h-24 bg-emerald-200/10 rounded-full blur-xl pointer-events-none" />
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-                    ) : (() => {
-                      const rawAlts = [
-                        ...(alt.commercialAlternatives || []).map((c: any) => ({ name: c.name || c.brand_name, price: c.price_inr ?? c.price ?? null })),
-                        ...(alt.substitutes || []).map((subName: string) => ({ name: subName, price: null }))
-                      ];
-                      
-                      const uniqueAlts: Array<{ name: string; price: number | null }> = [];
-                      const seenNames = new Set();
-                      for (const item of rawAlts) {
-                        if (!item.name) continue;
-                        const norm = item.name.trim().toLowerCase();
-                        if (!seenNames.has(norm)) {
-                          seenNames.add(norm);
-                          uniqueAlts.push(item);
-                        }
-                      }
-                      
-                      return (
-                        <div className="space-y-4">
-                          <div className="flex gap-3 text-xs text-slate-500 bg-slate-50 border border-slate-100 p-4 rounded-2xl leading-relaxed">
-                            <Info className="w-5 h-5 shrink-0 text-slate-400" />
-                            <span>
-                              No direct government Jan Aushadhi Kendra alternatives were found matching this chemical composition. However, here are verified high-quality commercial brand substitutes:
-                            </span>
-                          </div>
+                                  <h5 className="text-sm font-bold text-slate-800 leading-tight">
+                                    {jaRow.generic_name || jaRow["Generic Name"]}
+                                  </h5>
+                                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                                    <span>Unit Size: <strong className="text-slate-700">{jaRow.unit_size || jaRow["Unit Size"]}</strong></span>
+                                    <span>•</span>
+                                    <span>Class: <strong className="text-slate-700">{jaRow.group || jaRow["Group Name"]}</strong></span>
+                                  </div>
+                                </div>
 
-                          {uniqueAlts.length > 0 ? (
-                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                              {uniqueAlts.slice(0, 4).map((sub, subIdx) => {
-                                const redirect1mg = `https://www.1mg.com/search/all?name=${encodeURIComponent(sub.name)}`;
-                                const redirectPharmeasy = `https://pharmeasy.in/search/all?name=${encodeURIComponent(sub.name)}`;
+                                <div className="flex md:flex-col items-baseline md:items-end justify-between w-full md:w-auto border-t md:border-t-0 border-slate-100 pt-3 md:pt-0 z-10 shrink-0">
+                                  <div className="text-right">
+                                    <span className="text-[9px] text-slate-400 block uppercase tracking-wider font-bold">Govt Kendra MRP</span>
+                                    <span className="text-lg font-black text-emerald-600">{formatPrice(jaMRP)}</span>
+                                  </div>
+                                  {savingsPct > 0 && (
+                                    <span className="text-[9px] font-black text-white bg-emerald-500 border border-emerald-600 px-2 py-0.5 rounded-full mt-1 shadow-sm block animate-pulse">
+                                      Save {savingsPct}%
+                                    </span>
+                                  )}
+                                </div>
                                 
+                                <div className="absolute right-0 bottom-0 w-24 h-24 bg-emerald-200/10 rounded-full blur-xl pointer-events-none" />
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50 border border-slate-150 p-4 rounded-3xl flex gap-3 items-start">
+                          <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                          <div className="space-y-0.5">
+                            <span className="text-xs font-bold text-slate-600 block">Not Found in Government Kendra DB</span>
+                            <p className="text-[11px] text-slate-400 leading-relaxed">
+                              No direct Jan Aushadhi generic equivalent is matched for this composition. You can still purchase the cheaper commercial alternatives below.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Section 2: Cheaper Brand Alternatives */}
+                    <div className="space-y-3.5 pt-2">
+                      <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100/50 shadow-sm inline-block uppercase tracking-wider">
+                        2. Cheaper Brand Substitutes
+                      </span>
+                      {(() => {
+                        const rawAlts = [
+                          ...(alt.commercialAlternatives || []).map((c: any) => ({ name: c.name || c.brand_name || c.brandName, price: c.price_inr ?? c.price ?? null })),
+                          ...(alt.substitutes || []).map((subName: string) => ({ name: subName, price: null }))
+                        ];
+                        
+                        const uniqueAlts: Array<{ name: string; price: number | null }> = [];
+                        const seenNames = new Set();
+                        for (const item of rawAlts) {
+                          if (!item.name) continue;
+                          const norm = item.name.trim().toLowerCase();
+                          const brandNorm = (alt.brandName || alt.name || "").trim().toLowerCase();
+                          if (norm === brandNorm) continue;
+                          if (!seenNames.has(norm)) {
+                            seenNames.add(norm);
+                            uniqueAlts.push(item);
+                          }
+                        }
+
+                        if (uniqueAlts.length > 0) {
+                          return (
+                            <div className="space-y-3">
+                              {uniqueAlts.slice(0, 3).map((sub: any, subIdx: number) => {
+                                const brandPrice = alt.brandPrice || 0;
+                                const subPriceSavingsPct = (brandPrice > 0 && sub.price > 0 && sub.price < brandPrice) 
+                                  ? Math.round(((brandPrice - sub.price) / brandPrice) * 100) 
+                                  : 0;
+
                                 return (
                                   <motion.div
                                     key={subIdx}
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: subIdx * 0.1 }}
-                                    className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-300 flex flex-col gap-4 relative overflow-hidden"
+                                    transition={{ delay: subIdx * 0.08 }}
+                                    className="bg-white border border-slate-150 hover:border-slate-250 rounded-3xl p-4.5 shadow-sm hover:shadow transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden"
                                   >
-                                    <div className="flex justify-between items-start gap-4">
-                                      <div className="space-y-1">
-                                        <span className="text-[9px] font-extrabold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full tracking-wider uppercase border border-blue-100/50">
-                                          Commercial Alternative #{subIdx + 1}
+                                    <div className="flex-1 space-y-1.5 z-10">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-[9px] font-extrabold text-blue-700 bg-blue-50 border border-blue-100/50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                          Alternative #{subIdx + 1}
                                         </span>
-                                        <h5 className="text-md font-bold text-slate-800 leading-tight pt-1">
-                                          {sub.name}
-                                        </h5>
+                                        {subPriceSavingsPct > 0 && (
+                                          <span className="text-[9px] font-extrabold text-emerald-750 bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 rounded-full uppercase">
+                                            Save {subPriceSavingsPct}%
+                                          </span>
+                                        )}
                                       </div>
-                                      
+                                      <h5 className="text-sm font-bold text-slate-800 leading-tight">
+                                        {sub.name}
+                                      </h5>
+                                    </div>
+
+                                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto shrink-0 gap-3 border-t md:border-t-0 border-slate-50 pt-2.5 md:pt-0 z-10">
                                       {sub.price !== null && sub.price > 0 && (
-                                        <div className="text-right shrink-0">
-                                          <span className="text-[9px] text-slate-400 block uppercase tracking-wider font-semibold">Est. Brand MRP</span>
-                                          <span className="text-md font-extrabold text-slate-700">{formatPrice(sub.price)}</span>
+                                        <div className="text-left md:text-right">
+                                          <span className="text-[8px] text-slate-400 block uppercase tracking-wider font-bold">Est. Brand MRP</span>
+                                          <span className="text-sm font-black text-slate-700">{formatPrice(sub.price)}</span>
                                         </div>
                                       )}
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-50">
-                                      <button
-                                        onClick={() => window.open(redirect1mg, "_blank")}
-                                        className="flex items-center justify-center gap-1.5 text-[10px] font-black py-2.5 px-3 text-white rounded-xl bg-[#ff6f61] hover:bg-[#e05648] shadow-sm transition-all duration-300"
-                                      >
-                                        <span className="w-3.5 h-3.5 rounded-full bg-white text-[#ff6f61] flex items-center justify-center text-[6px]">1mg</span>
-                                        <span>Buy on 1mg</span>
-                                        <ExternalLink className="w-2.5 h-2.5 opacity-80" />
-                                      </button>
                                       
-                                      <button
-                                        onClick={() => window.open(redirectPharmeasy, "_blank")}
-                                        className="flex items-center justify-center gap-1.5 text-[10px] font-black py-2.5 px-3 text-white rounded-xl bg-[#10847e] hover:bg-[#0e746e] shadow-sm transition-all duration-300"
-                                      >
-                                        <span className="w-3.5 h-3.5 rounded-full bg-white text-[#10847e] flex items-center justify-center text-[6px]">PE</span>
-                                        <span>Buy on PharmEasy</span>
-                                        <ExternalLink className="w-2.5 h-2.5 opacity-80" />
-                                      </button>
+                                      {/* Tiny logo links */}
+                                      <div className="flex items-center gap-1.5">
+                                        <a
+                                          href={`https://www.1mg.com/search/all?name=${encodeURIComponent(sub.name)}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-0.5 bg-white hover:bg-orange-50 border border-slate-200 hover:border-[#ff6f61] px-2.5 py-1.5 rounded-full shadow-sm hover:shadow transition-all duration-300 group shrink-0 cursor-pointer"
+                                          title={`Search ${sub.name} on Tata 1mg`}
+                                        >
+                                          <span className="text-slate-800 font-extrabold text-[9px] tracking-tight">tata</span>
+                                          <span className="bg-[#ff6f61] text-white text-[7px] font-black px-1 py-0.5 rounded-[3px] uppercase tracking-wide">1mg</span>
+                                        </a>
+
+                                        <a
+                                          href={`https://pharmeasy.in/search/all?name=${encodeURIComponent(sub.name)}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-0.5 bg-white hover:bg-teal-50 border border-slate-200 hover:border-[#10847e] px-2.5 py-1.5 rounded-full shadow-sm hover:shadow transition-all duration-300 group shrink-0 cursor-pointer"
+                                          title={`Search ${sub.name} on PharmEasy`}
+                                        >
+                                          <span className="text-[#10847e] font-black text-[9px] tracking-tight">Pharm</span>
+                                          <span className="text-[#f9b115] font-black text-[9px] tracking-tight">Easy</span>
+                                        </a>
+                                      </div>
                                     </div>
                                   </motion.div>
                                 );
                               })}
                             </div>
-                          ) : (
+                          );
+                        } else {
+                          return (
                             <div className="p-6 border border-dashed border-slate-200 rounded-3xl text-center">
                               <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                               <p className="text-xs font-semibold text-slate-400">No substitutes found in catalog</p>
                               <p className="text-[10px] text-slate-300 mt-1">Please ask your chemist for comparable brands.</p>
                             </div>
-                          )}
-                          </div>
-                        );
+                          );
+                        }
                       })()}
+                    </div>
 
                     {/* Jan Aushadhi Kendra Information Card */}
                     <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 flex gap-4 items-start shadow-sm mt-4">
